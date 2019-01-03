@@ -1,0 +1,17 @@
+// 分转元
+var formatCurrency = function (s) {
+  if (s >= 100) {
+    s = s + ''
+    return s.slice(0,-2) + '.' + s.slice(-2)
+  } else if (s >= 10) {
+    return '0.' + s
+  } else if (s > 0) {
+    return '0.0' + s
+  } else {
+    return s
+  }
+}
+
+module.exports = {
+  formatCurrency: formatCurrency
+}

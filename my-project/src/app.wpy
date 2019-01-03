@@ -1,0 +1,76 @@
+<script>
+import wepy from 'wepy'
+import 'wepy-async-function'
+
+import { setStore } from 'wepy-redux'
+import configStore from './store'
+
+const store = configStore()
+setStore(store)
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      'pages/home/main/main',
+      'pages/home/wbview/wbview',
+      'pages/home/wxpay/wxpay',
+
+      'pages/activity/qilumain/qilumain',
+      'pages/activity/qilukj/qilukj',
+      'pages/activity/qilupt/qilupt',
+      'pages/activity/qiluimg/qiluimg',
+      'pages/activity/kanjia/kanjia',
+      'pages/activity/kanjiaimg/kanjiaimg',
+
+      'pages/login/index/index',
+      'pages/login/web-view/web-view',
+      'pages/login/wv-common/wv-common'
+    ],
+    plugins: {
+      'loginPlugin': {
+        'version': '1.1.7',
+        'provider': 'wxefe655223916819e'
+      }
+    },
+    window: {
+      'backgroundTextStyle': 'light',
+      'navigationBarBackgroundColor': '#fff',
+      'navigationBarTitleText': 'WeChat',
+      'navigationBarTextStyle': 'black'
+    }
+  }
+
+  globalData = {
+    webShowed: false // 标记web-view页面是否已经显示过了
+  }
+
+  constructor () {
+    super()
+    this.use('requestfix')
+    this.use('promisify')
+  }
+
+  onLaunch () {}
+
+  onShow () {}
+
+  onHide () {
+    this.globalData.webShowed = false
+  }
+
+  onError () {}
+
+  onPageNotFound () {}
+}
+</script>
+
+<style lang="scss">
+  .container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+</style>

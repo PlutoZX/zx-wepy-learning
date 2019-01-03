@@ -1,0 +1,155 @@
+<template>
+  <view class="main-container">
+    <view class="bgImage">
+      <view class="pointImage">
+        <button class="shareBtn" open-type="share"><text class="iconfont"></text>分享好友</button>
+      </view>
+    </view>
+    
+    <button class="bigBtn" bindtap="toWbview">立即开通</button>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import loginUtils from '../../login/util'
+  import utils from '../../../utils/utils'
+  // let utils = require('../../../utils/utils')
+  
+  export default class Main extends wepy.page {
+    config = {
+      navigationBarTitleText: '高速通行'
+    }
+  
+    components = {}
+  
+    data = {
+  
+    }
+  
+    onLoad () {
+      // TODO 测试
+      // wx.redirectTo({
+      //   url: `/pages/activity/qilumain/qilumain?channel=123456`,
+      // })
+    }
+  
+    onShow () {
+  
+    }
+  
+    onShareAppMessage () { // 分享出去后打开的页面地址
+      return {
+        title: 'ETC可线上申请，上门安装啦！',
+        imageUrl: 'https://storage.jd.com/fe-zx/etcmini/activity/qiluptkj/shareimg.png',
+        path: '/pages/home/main/main'
+      }
+    }
+  
+    methods = {
+      toWbview: function () {
+        let sysInfo = wx.getSystemInfoSync()
+        if (utils.compareVersion(sysInfo.SDKVersion, '2.2.5') === -1) {
+          wx.showToast({
+            title: '很抱歉，您的微信版本过低，请升级后再试哦~',
+            icon: 'none',
+            duration: 3000
+          })
+          return false
+        }
+        // eslint-disable-next-line
+        let ptKey = requirePlugin('loginPlugin').getStorageSync('jdlogin_pt_key') || ''
+        if (!ptKey) { // 未登录去登录
+          wx.navigateTo({
+            url: `/pages/login/index/index?returnPage=${encodeURIComponent('https://etc.jd.com')}&pageType=h5&isLogout=${0}&jdlogin=${0}`
+          })
+        } else { // 已登录
+          loginUtils.navigateToH5({
+            page: encodeURIComponent('https://etc.jd.com')
+          })
+          // loginUtils.default.navigateToH5({
+          //   page: encodeURIComponent('https://etc.jd.com')
+          // })
+        }
+      }
+    }
+}
+</script>
+
+<style lang="scss" scoped>
+  .main-container {
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  
+    .bgImage {
+      flex: 1;
+      width: 100%;
+      background-image: url(https://storage.jd.com/fe-zx/etcmini/imgs/main_bg_img.png);
+      background-repeat: no-repeat;
+      background-size: 100%;
+      background-color: #d4152b;
+      position: relative;
+  
+      .pointImage {
+        margin: auto;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 32rpx;
+        width: 694rpx;
+        height: 201rpx;
+        background-image: url(https://storage.jd.com/fe-zx/etcmini/imgs/main_pont_img.png);
+        background-repeat: no-repeat;
+        background-size: contain;
+  
+        .shareBtn {
+          position: absolute;
+          top: -65rpx;
+          right: 0;
+          background-color: transparent;
+          font-size: 26rpx;
+          text-decoration: underline;
+          color: #fff;
+          display: flex;
+          align-items: center;
+  
+          .iconfont {
+            display: inline-block;
+            margin: 0 10rpx;
+            width: 33rpx;
+            height: 31rpx;
+            background-image: url(https://storage.jd.com/fe-zx/etcmini/imgs/share_icon.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+          }
+        }
+        .shareBtn:after {
+          display: none;
+        }
+      }
+    }
+  
+    .bigBtn {
+      /*position: fixed;*/
+      /*left: 0;*/
+      /*bottom: 0;*/
+      flex-grow: 0;
+      flex-shrink: 0;
+      width: 100%;
+      height: 135rpx;
+      margin: 0 auto;
+      background-image: linear-gradient(90deg, #ff9c00, #ffcc00);
+      font-size: 47rpx;
+      line-height: 135rpx;
+      font-weight: 600;
+      color: #fff;
+      border-radius: 0;
+    }
+    .bigBtn:after {
+      display: none;
+    }
+  }
+</style>
