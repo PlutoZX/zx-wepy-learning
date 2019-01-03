@@ -28,12 +28,25 @@
 			"list": []
 		},
 		"miniprogram": {
-			"current": 0,
+			"current": 2,
 			"list": [
 				{
 					"id": -1,
 					"name": "etc小程序主页",
-					"pathName": "pages/home/main"
+					"pathName": "pages/home/main",
+					"query": ""
+				},
+				{
+					"id": -1,
+					"name": "直接进图片生成页带参数",
+					"pathName": "pages/activity/kanjiaimg/kanjiaimg",
+					"query": "sharePath=0e7c3d15bb925706a1bccc97a0ca699d"
+				},
+				{
+					"id": -1,
+					"name": "直接进图片生成页不带参数",
+					"pathName": "pages/activity/kanjiaimg/kanjiaimg",
+					"query": ""
 				}
 			]
 		}

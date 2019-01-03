@@ -159,7 +159,7 @@ const sendPoint = function sendPoint (sendObj = {}) {
   })
 }
 
-// module.exports = {
+// module.exports = { // commonjs规范
 //   formatNumber: formatNumber,
 //   rpx2px: rpx2px,
 //   compareVersion: compareVersion,
@@ -170,7 +170,7 @@ const sendPoint = function sendPoint (sendObj = {}) {
 //   sendPoint: sendPoint
 // }
 
-export default {
+export default { // es6 规范
   formatNumber: formatNumber,
   rpx2px: rpx2px,
   compareVersion: compareVersion,

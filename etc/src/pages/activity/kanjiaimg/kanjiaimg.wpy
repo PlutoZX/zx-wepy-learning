@@ -1,0 +1,398 @@
+<template>
+  <view class="kanjiaimg_container">
+    
+    <view class="mini_share_pop" wx:if="{{ 1 }}">
+      <form class="share_pop_content_form" report-submit='true' bind:submit="handleSubmitGetMsg">
+        <view class="share_pop_content">
+          <button formType="submit" open-type="share" class="share_pop_content_item" bind:tap="handleShareFriend">
+            <image class="share_pop_content_img" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/share_weixin_icon.png"></image>
+            <view class="share_pop_content_text">微信好友/群</view>
+          </button>
+          <button formType="submit" class="share_pop_content_item" bind:tap="handleShowImgPop">
+            <image class="share_pop_content_img" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/share_timeline_icon.png"></image>
+            <view class="share_pop_content_text">朋友圈</view>
+          </button>
+        </view>
+      </form>
+    </view>
+    
+    <view class="img_pop" hidden="{{ !showImgPop }}">
+      <view class="img_pop_layer"></view>
+      <view class="img_pop_content">
+        <view class="img_pop_close_box">
+          <image src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/close_icon.png" class="img_pop_close" bind:tap="handleCloseImgPop"></image>
+        </view>
+        <canvas canvas-id="imgCanvas" class="imgCanvas"/>
+        <view class="img_pop_btn" bind:tap="handleSaveImage">保存到本地</view>
+      </view>
+    </view>
+  </view>
+
+</template>
+
+<script>
+  import wepy from 'wepy'
+  // import loginUtils from '../../login/util'
+  import utils from '../../../utils/utils'
+  
+  export default class Kanjiaimg extends wepy.page {
+    config = {
+      navigationBarTitleText: '高速通行'
+    }
+  
+    components = {}
+  
+    data = {
+      poster: '', // 营销渠道海报
+  
+      shareTitle: 'ETC可线上办理，上门安装啦，快帮我砍砍价，省点儿是点儿',
+      sharePath: '',
+      shareImg: 'https://storage.jd.com/fe-zx/etcmini/activity/qiluptkj/shareimg.png',
+  
+      ptKey: '', // 访问者ptKey
+      shareKey: '', // 发起者shareKey
+      bgUrl: 'https://storage.jd.com/fe-zx/etcmini/activity/kanjia/share_img_bg.png', // 背景图Url
+      qrcodeUrl: '', // 二维码图Url
+      totalUrl: '', // 生成合成图片的本地缓存url
+      showImgPop: false
+    }
+  
+    onLoad (query) {
+      const _this = this
+      // 从query里获取二维码内容地址 传给服务端 返回生成的二维码图片地址
+      let curpage = getCurrentPages()[getCurrentPages().length - 1] // eslint-disable-line
+      if (curpage.options.sharePath) { // 存在 存下来shareUrl
+        _this.sharePath = decodeURIComponent(curpage.options.sharePath)
+        _this.poster = curpage.options.poster || ''
+        _this.$apply()
+      } else {
+        wx.showToast({
+          title: '很抱歉，分享地址有误',
+          icon: 'none'
+        })
+      }
+      _this.ptKey = requirePlugin('loginPlugin').getStorageSync('jdlogin_pt_key') || '' // eslint-disable-line
+    }
+  
+    onShareAppMessage (info) { // 最终分享
+      let _this = this
+      return {
+        title: _this.data.shareTitle,
+        path: _this.data.sharePath,
+        imageUrl: _this.data.shareImg
+      }
+    }
+  
+    methods = {
+  
+    }
+  
+    handleShowImgPop () { // 显示图片弹窗
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_showImg',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+      this.showImgPop = true
+      this.handleQueryQrimgUrl()
+    }
+  
+    handleCloseImgPop () { // 隐藏图片弹窗
+      this.showImgPop = false
+    }
+  
+    async handleQueryQrimgUrl () { // 请求二维码图片地址
+      wx.showLoading({
+        title: '请稍后...'
+      })
+      const _this = this
+  
+      let reqObj = {
+        url: 'https://payhome.jd.com/my/api/etc/WXACode',
+        header: {
+          Cookie: 'pt_key=' + _this.data.ptKey
+        },
+        data: {
+          path: decodeURIComponent(_this.data.sharePath)
+        }
+      }
+      let res = await wepy.request(reqObj)
+      let RES = res.data
+      if (RES.code === 'INVITE_000000') {
+        console.log('xxx，请求图片地址成功')
+        _this.qrcodeUrl = RES.data.replace('http://', 'https://')
+        _this.$apply()
+        let bgctx = wx.createCanvasContext('imgCanvas')
+        _this.setBgImg(bgctx)
+      } else {
+        wx.showToast({
+          title: '很抱歉，生成图片失败',
+          icon: 'none',
+          duration: 2500
+        })
+      }
+    }
+  
+    setBgImg (ctx) { // 画背景图
+      const _this = this
+      wx.downloadFile({ // 下载图片api获取 图片信息
+        url: _this.data.bgUrl,
+        success: function (res) {
+          let path = res.tempFilePath
+          ctx.drawImage(path, 0, 0, utils.rpx2px(550), utils.rpx2px(978))
+          _this.setQrImg(ctx) // 执行画二维码
+        }
+      })
+    }
+  
+    setQrImg (ctx) { // 画二维码
+      const _this = this
+      wx.getImageInfo({
+        src: _this.data.qrcodeUrl,
+        success: function (res) {
+          console.log('xxx，getImageInfo方法的回调')
+          let path = res.path
+          ctx.drawImage(path, utils.rpx2px(200), utils.rpx2px(780), utils.rpx2px(150), utils.rpx2px(150))
+          ctx.draw(false, function () { // 调用draw方法才是真的画了
+            console.log('xxx，draw方法的回调')
+            wx.canvasToTempFilePath({ // 从canvas生成图片本地缓存url
+              canvasId: 'imgCanvas',
+              complete: function (res) {
+                console.log('xxx，从canvas生成图片本地缓存url', res)
+                _this.totalUrl = res.tempFilePath
+                wx.hideLoading()
+              }
+            })
+          })
+        }
+      })
+    }
+  
+    handlePreviewImage () { // 点击图片调用微信预览api
+      wx.previewImage({
+        urls: [
+          this.data.totalUrl
+        ]
+      })
+    }
+  
+    handleSaveImage () { // 手动保存图片
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_saveImg',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+  
+      const _this = this
+      if (_this.data.isLoading) {
+        return false
+      }
+      _this.isLoading = true
+  
+      wx.getSetting({
+        success: function (res) {
+          console.log(res)
+          if (res.authSetting['scope.writePhotosAlbum'] === false) { // 未获得保存相册授权
+            wx.openSetting({ // 在点击事件中可以使用 呼起权限面板
+              success: function (res) {
+                console.log(res)
+                _this.isLoading = false
+              }
+            })
+  
+            // wx.authorize({ // 主动要授权 用户不同意 不会再弹窗
+            //   scope: 'scope.writePhotosAlbum',
+            //   success: function (res) {
+            //     console.log(res)
+            //   },
+            //   fail: function (res) {
+            //     console.log(res)
+            //   }
+            // })
+          } else { // 已获得相册授权 或者 第一次申请授权
+            wx.saveImageToPhotosAlbum({
+              filePath: _this.data.totalUrl,
+              success: function (res) {
+                wx.showToast({
+                  title: '保存成功'
+                })
+              },
+              fail: function (res) {
+                console.log('filePath', _this.data.totalUrl)
+                wx.showToast({
+                  title: '保存取消',
+                  icon: 'none'
+                })
+              },
+              complete: function (res) {
+                _this.isLoading = false
+              }
+            })
+          }
+        }
+      })
+    }
+  
+    handleShareFriend () {
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_shareFriend',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+    }
+  
+    handleSubmitGetMsg (e) { // 发服务通知消息需要
+      const _this = this
+      wx.login({
+        success (res) {
+          if (res.code) {
+            // 标记msg
+            wx.request({
+              url: 'https://payhome.jd.com/my/api/etc/kanjia/saveUserWxInfo',
+              header: {
+                Cookie: 'pt_key=' + _this.data.ptKey
+              },
+              data: {
+                code: res.code,
+                formId: e.detail.formId
+              },
+              complete: (res) => {
+                let RES = res.data
+                console.log(RES)
+              }
+            })
+          } else {
+            console.log('登录失败！' + res.errMsg)
+          }
+        }
+      })
+    }
+  }
+</script>
+
+<style lang="scss" scoped>
+  .kanjiaimg_container {
+    .mini_share_pop {
+      z-index: 10;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #c21524;
+      background-repeat: no-repeat;
+      background-size: 100%;
+      background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/mini_share_pop_bg.png);
+  
+      .share_pop_content {
+        box-sizing: border-box;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #edeef3;
+        width: 100%;
+        height: 320rpx;
+        padding: 0 100rpx;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+  
+        .share_pop_content_item::after {
+          display: none;
+        }
+        .share_pop_content_item {
+          text-align: center;
+          padding: 0;
+          margin: 0;
+          background-color: transparent;
+          border: none;
+          outline: none;
+  
+          .share_pop_content_img {
+            display: block;
+            width: 132rpx;
+            height: 132rpx;
+            margin: 0 auto 15rpx;
+          }
+          .share_pop_content_text {
+            color: #4d4d4d;
+            line-height: 1;
+          }
+        }
+      }
+    }
+  
+    .img_pop {
+      z-index: 12;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+  
+      .img_pop_layer {
+        z-index: 13;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, .7);
+      }
+      .img_pop_content {
+        z-index: 14;
+        position: relative;
+        /*width: 418rpx;*/
+        width: 550rpx;
+        margin: 100rpx auto 0;
+  
+        .img_pop_close_box {
+          z-index: 15;
+          position: absolute;
+          top: -70rpx;
+          right: -34rpx;
+          width: 68rpx;
+          height: 68rpx;
+  
+          .img_pop_close {
+            width: 68rpx;
+            height: 68rpx;
+            text-align: center;
+            line-height: 68rpx;
+            color: #e9b65b;
+            border-radius: 50%;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/close_icon.png);
+          }
+        }
+        .imgCanvas {
+          z-index: 14;
+          /*width: 418rpx;*/
+          /*height: 744rpx;*/
+          width: 550rpx;
+          height: 978rpx;
+        }
+        .img_pop_btn {
+          margin: 40rpx auto 0;
+          width: 463rpx;
+          height: 87rpx;
+          background-color: #ff1e2d;
+          text-align: center;
+          color: #fff;
+          line-height: 87rpx;
+          border-radius: 43.5rpx;
+        }
+      }
+    }
+  }
+</style>

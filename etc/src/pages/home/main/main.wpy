@@ -14,7 +14,6 @@
   import wepy from 'wepy'
   import loginUtils from '../../login/util'
   import utils from '../../../utils/utils'
-  // let utils = require('../../../utils/utils')
   
   export default class Main extends wepy.page {
     config = {
@@ -23,9 +22,7 @@
   
     components = {}
   
-    data = {
-  
-    }
+    data = {}
   
     onLoad () {
       // TODO 测试
@@ -34,9 +31,7 @@
       // })
     }
   
-    onShow () {
-  
-    }
+    onShow () {}
   
     onShareAppMessage () { // 分享出去后打开的页面地址
       return {
@@ -67,9 +62,6 @@
           loginUtils.navigateToH5({
             page: encodeURIComponent('https://etc.jd.com')
           })
-          // loginUtils.default.navigateToH5({
-          //   page: encodeURIComponent('https://etc.jd.com')
-          // })
         }
       }
     }
