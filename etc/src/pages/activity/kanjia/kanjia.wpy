@@ -1,0 +1,1042 @@
+<template>
+  <view class="kanjia_container">
+    <view class="logo_box">
+      <view class="sponsor_box" wx:if="{{ sponsorWXName || sponsorName }}">
+        <text class="sponsor_name">{{ sponsorWXName || sponsorName }}</text>
+        <image class="sponsor_img" src="{{ sponsorWXAvatar || sponsorAvatar || 'https://storage.jd.com/fe-zx/etcmini/activity/qiluptkj/unknown_avator.png' }}"></image>
+      </view>
+    </view>
+    
+    <view class="operation_box">
+      <view class="operation_header">
+        <image class="operation_header_left" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/operation_header.png"></image>
+        <view class="operation_header_right">
+          <view class="operation_header_p">线上办理ETC设备，安装后，可实现不停车通行</view>
+          <view class="operation_header_span">
+            <text class="operation_header_span1">原价:￥268</text>
+            <text class="operation_header_span2 red" wx:if="{{ actStatus === 0 }}">当前价:￥<text class="operation_header_spantext">?</text></text>
+            <text class="operation_header_span2 red" wx:elif="{{ actStatus !== 0 }}">当前价:￥<text class="operation_header_spantext">{{ commwxs.formatCurrency(finalPrice) }}</text></text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="progress_box" wx:if="{{ actStatus !== 0 }}">
+        <view class="progress_total">
+          <text>共<text class="red">{{ friendsList.length }}</text>人助力，已砍掉<text class="red">{{ commwxs.formatCurrency(readyCutPrice) }}</text>元</text>
+          <view class="kanjia_fail_icon" wx:if="{{ actStatus === 200 }}"></view>
+          <view class="kanjia_success_icon" wx:elif="{{ actStatus === 300 }}"></view>
+          <view class="kanjia_complete_icon" wx:elif="{{ actStatus === 400 }}"></view>
+        </view>
+        
+        <view class="progress_line">
+          <view class="line_sub" style="width:{{ linePercent }};"></view>
+        </view>
+        
+        <view class="progress_origin">
+          <text class="red">原价{{ commwxs.formatCurrency(originPrice) }}元</text>
+          <text class="red" wx:if="{{ false }}">惊爆价??元</text>
+        </view>
+        
+        <view class="progress_time" wx:if="{{ actStatus === 100 }}">
+          <text decode="true">距结束 </text><text class="progress_time_num">{{ cdh }}</text><text class="progress_time_dot">:</text><text class="progress_time_num">{{ cdm }}</text><text class="progress_time_dot">:</text><text class="progress_time_num">{{ cds }}</text>
+        </view>
+        
+        <view class="progress_explain">活动已结束，请您按原价办理</view>
+        <!--<view class="progress_explain" wx:if="{{ visitorStatus === 2 }}">您已经帮好友砍过价了，快去参加活动吧</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 100 && visitorStatus === 0 }}">好友砍价进行中，快来帮忙吧</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 100 && visitorStatus === 1 }}">砍价进行中，快去邀请好友帮忙吧</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 200 && visitorStatus === 0 }}">您的好友可砍价时间已到</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 200 && visitorStatus === 1 }}">时间已到，砍价结束</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 300 && visitorStatus === 0 }}">您的好友已经砍价成功</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 300 && visitorStatus === 1 }}">恭喜您，砍价成功</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 400 && visitorStatus === 0 }}">您的好友已经申请成功</view>-->
+        <!--<view class="progress_explain" wx:elif="{{ actStatus === 400 && visitorStatus === 1 }}">您已经申请成功</view>-->
+      </view>
+      
+      <view class="btn_box">
+        <view class="big_btn" bind:tap="handleCurrentPriceDeal">活动已结束 原价办理</view>
+        
+        <!--<button class="big_btn" wx:if="{{ actStatus === 0 }}" open-type="getUserInfo" bind:getuserinfo="handleStartActAuth" >邀请好友帮砍价</button>-->
+        
+        <!--<view class="sm_btn sm_btn1" wx:if="{{ actStatus === 100 && visitorStatus === 1 }}" bind:tap="handleCurrentPriceDeal">当前价办理</view>-->
+        <!--<view class="sm_btn sm_btn2" wx:if="{{ actStatus === 100 && visitorStatus === 1 }}" bind:tap="handleHelpShare">找人帮砍</view>-->
+        <!--<view class="big_btn" wx:if="{{ (actStatus === 200 || actStatus === 300) && visitorStatus === 1 }}" bind:tap="handleCurrentPriceDeal">当前价办理</view>-->
+        <!--<view class="big_btn" wx:if="{{ actStatus === 400 && visitorStatus === 1 }}" bind:tap="handleOriginShare">将活动分享给好友</view>-->
+        
+        <!--<button class="big_btn" wx:if="{{ actStatus === 100 && visitorStatus === 0 }}" open-type="getUserInfo" bind:getuserinfo="handleDoBargainAuth">帮TA砍一刀</button>-->
+        <!--<view class="big_btn" wx:if="{{ (actStatus === 200 || actStatus === 300 || actStatus === 400) && visitorStatus === 0 }}" bind:tap="handleSelfIn">我也要参加</view>-->
+        
+        <!--<view class="sm_btn sm_btn1" wx:if="{{ actStatus === 100 && visitorStatus === 2 }}" bind:tap="handleSelfIn">我也要参加</view>-->
+        <!--<view class="sm_btn sm_btn2" wx:if="{{ actStatus === 100 && visitorStatus === 2 }}" bind:tap="handleHelpShare">邀请好友帮TA砍价</view>-->
+        <!--<view class="big_btn" wx:if="{{ (actStatus === 200 || actStatus === 300 || actStatus === 400) && visitorStatus === 2 }}" bind:tap="handleSelfIn">我也要参加</view>-->
+      </view>
+    </view>
+    
+    <view class="friend_box">
+      <view class="sub_title" wx:if="{{ showFriendsList.length > 0 }}"><text>砍价帮</text></view>
+      
+      <view class="list_box" wx:if="{{ showFriendsList.length > 0 }}">
+        <view class="friend_item" wx:for="{{ showFriendsList }}">
+          <view class="friend_left">
+            <image class="friend_left_avatar" src="{{ item.wechatImgUrl || item.yunSmaImageUrl || 'https://storage.jd.com/fe-zx/etcmini/activity/qiluptkj/unknown_avator.png' }}" alt="" />
+            <view class="friend_left_text">
+              <view class="friend_left_text1">{{ item.wechatName || item.nickname }}</view>
+              <view class="friend_left_text2">{{ item.helpTime }}</view>
+            </view>
+          </view>
+          <view class="friend_right">砍掉了<text class="friend_right_text">{{ commwxs.formatCurrency(item.price) }}</text>元</view>
+        </view>
+        
+        <view class="list_more" wx:if="{{ showFriendsList.length <= 5 && friendsList.length > 5 }}" bind:tap="handleShowAllList">查看更多</view>
+      </view>
+      
+      <view class="sub_title"><span>活动规则</span></view>
+      <view class="rule_box">
+        <view class="rulep rulep1">砍价活动有效时间是24小时，自活动发起后开始计时，一人仅可以发起一次砍价活动；</view>
+        <view class="rulep rulep2">砍价活动在有效时间内砍掉多少省多少，超出有效时间后，好友砍价不再成功，且只能为每个好友砍价一次；</view>
+        <view class="rulep rulep3">因各活动商家的受理设备不同，具体支持的支付产品请以商家店内实际情况为准；</view>
+        <view class="rulep rulep4">如出现不可抗力或情势变更的情况（包括但不限于重大灾害事件、活动受政府机关指令需要停止举办或调整的、活动遭受严重网络攻击或因系统故障需要暂停举办的），主办方有权暂停或取消本次活动，并可依相关法律法规的规定主张免责；</view>
+        <view class="rulep rulep5">本次活动在法律法规范围内最终解释权归京东金融所有；</view>
+        <view class="rulep rulep6">因活动期间订单量较大，为方便客户能尽快使用，偏远地区用户可与工程协商就近安装；</view>
+      </view>
+    </view>
+    
+    <view class="what_box">
+      <view class="sub_title"><text>京东ETC是啥？</text></view>
+      <view class="what_item">
+        <image class="what_item_left" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/what_icon1.png"></image>
+        <view class="what_item_right">
+          <view class="what_item_right1">线上提交证件即可办理</view>
+          <view class="what_item_right2">免去到线下网点和银行办卡的困扰</view>
+        </view>
+      </view>
+      
+      <view class="what_item">
+        <image class="what_item_left" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/what_icon2.png"></image>
+        <view class="what_item_right">
+          <view class="what_item_right1">材料审核通过后将设备邮寄到家</view>
+          <view class="what_item_right2">京东物流为您送货上门，专业人员为您上门安装</view>
+        </view>
+      </view>
+      
+      <view class="what_item">
+        <image class="what_item_left" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/what_icon3.png"></image>
+        <view class="what_item_right">
+          <view class="what_item_right1">先行后付，在线查看您的通行记录</view>
+          <view class="what_item_right2">签约代扣享先行后付权益，并随时可查看通行记录</view>
+        </view>
+      </view>
+    </view>
+    
+    
+    <view class="mini_success_pop" wx:if="{{ showSuccessPop }}">
+      <view class="layer"></view>
+      <view class="content">
+        <view class="content_close" bind:tap="handleCloseBargainSuccessPop"></view>
+        <image class="content_img" src="https://storage.jd.com/fe-zx/etcmini/activity/kanjia/mini_success_pop_img.png"></image>
+        <view class="content_p">您已成功为好友砍掉<text class="red">{{ commwxs.formatCurrency(successPopPrice) }}</text>元</view>
+        <view class="content_btn" bind:tap="handleSelfIn">我也要参加活动</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import loginUtils from '../../login/util'
+  import utils from '../../../utils/utils'
+  import commwxs from '../../../utils/comm.wxs'
+  
+  export default class Kanjia extends wepy.page {
+    config = {
+      navigationBarTitleText: 'ETC砍价玩起来'
+    }
+  
+    data = {
+      isLoading: false,
+  
+      visitorStatus: 0, // 访问者参与的活动状态 0非发起者非助力者 1发起者 2非发起者是助力者
+      actStatus: 0, // 活动状态 0未开始 100进行中 200砍价失败 300砍价成功 400已办理
+  
+      shareTitle: 'ETC可线上办理，上门安装啦，快帮我砍砍价，省点儿是点儿', // 分享标题
+      sharePath: '/pages/activity/kanjia/kanjia', // 分享链接
+      shareImg: 'https://storage.jd.com/fe-zx/etcmini/activity/qiluptkj/shareimg.png', // 分享图标
+      shareToUrl: '', // 分享成功之后的跳转地址
+  
+      shareKey: '', // 发起者标识
+      poster: '', // 渠道海报标识
+  
+      sponsorName: '', // 发起者京东名
+      sponsorAvatar: '', // 发起者京东头像
+      sponsorWXName: '', // 发起者微信名
+      sponsorWXAvatar: '', // 发起者微信头像
+      sponsorPin: '', // 发起者Pin
+  
+      ptKey: '', // 当前登录人ptKey
+      visitorPin: '', // 访问者Pin
+      visitorWXName: '', // 访问者微信名
+      visitorWXAvatar: '', // 访问者微信头像
+  
+      originPrice: 26800, // 原价
+      finalPrice: 26800, // 支付价
+      readyCutPrice: 0, // 已砍价
+      stillCutPrice: 0, // 还能砍
+      minCutPrice: 0, // 最低砍
+      maxCutPrice: 17800, // 最高砍
+  
+      linePercent: '0%', // 进度条
+  
+      kanjiaTimer: '', // 倒计时ID
+      actStartTime: 0, // 活动开始时间
+      cdh: '00', // 倒计时 时
+      cdm: '00', // 倒计时 分
+      cds: '00', // 倒计时 秒
+  
+      showFriendsList: [], // 展示的条目
+      friendsList: [], // 助力者列表
+      showAllList: false, // 折叠
+  
+      showSuccessPop: false, // 砍价成功弹窗
+      successPopPrice: 0 // 砍价成功金额
+    }
+  
+    wxs = {
+      commwxs: commwxs
+    }
+  
+    onLoad (query) {
+      const _this = this
+      wx.showLoading({
+        title: '请稍后...',
+        mask: true
+      })
+  
+      _this.shareKey = query.shareKey || ''
+      _this.poster = query.poster || ''
+  
+      // 校验登录
+      _this.ptKey = requirePlugin('loginPlugin').getStorageSync('jdlogin_pt_key') || '' //eslint-disable-line
+      if (!_this.ptKey) {
+        wx.redirectTo({
+          url: `/pages/login/index/index?returnPage=${encodeURIComponent('/pages/activity/kanjia/kanjia?shareKey=' + _this.shareKey + '&poster=' + _this.poster)}`
+        })
+        return false
+      }
+    }
+  
+    onShow () {
+      const _this = this
+      wx.showLoading({
+        title: '请稍后...',
+        mask: true
+      })
+      _this.handleQueryActInfo()
+  
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'enter',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+    }
+  
+    methods = {}
+  
+    async handleQueryActInfo () { // 查询活动状态 及 登录人状态
+      const _this = this
+      let reqObj = {
+        url: `https://payhome.jd.com/my/api/etc/queryAttendActivity?token=${_this.shareKey}`,
+        header: {
+          Cookie: 'pt_key=' + _this.ptKey
+        }
+      }
+      let res = await wepy.request(reqObj)
+      let RES = res.data
+      if (RES.code === 'F_000000') {
+        let RESDATA = RES.data
+        _this.sponsorName = RESDATA.inviterNickName
+        _this.sponsorAvatar = RESDATA.inviterImg
+        _this.sponsorWXName = RESDATA.wechatName
+        _this.sponsorWXAvatar = RESDATA.wechatImgUrl
+        _this.sponsorPin = RESDATA.inviterPin
+        _this.visitorPin = RESDATA.visitorPin
+        _this.readyCutPrice = RESDATA.amount
+        _this.actStartTime = RESDATA.creatTimeStamp
+        _this.friendsList = RESDATA.list
+  
+        if (!RESDATA.activityType) {
+          _this.actStatus = 0
+        } else if (RESDATA.activityStatus === 'underway') {
+          _this.actStatus = 100
+          clearInterval(_this.kanjiaTimer)
+          _this.kanjiaTimer = setInterval(() => {
+            this.handleCalculateCountDown(_this.actStartTime)
+          }, 1000)
+        } else if (RESDATA.activityStatus === 'end') {
+          _this.actStatus = 200
+        } else if (RESDATA.activityStatus === 'fini') {
+          _this.actStatus = 300
+        } else if (RESDATA.activityStatus === 'success') {
+          _this.actStatus = 400
+        } else {
+          _this.actStatus = 0
+        }
+  
+        if (RESDATA.inviterPin === RESDATA.visitorPin) {
+          _this.visitorStatus = 1
+        } else {
+          _this.visitorStatus = 0
+        }
+  
+        if (RESDATA.token) {
+          _this.shareKey = RESDATA.token
+          _this.handleQueryActList(RESDATA.token)
+        }
+  
+        _this.$apply()
+      } else {
+        wx.showToast({
+          title: `${RES.msg}`,
+          icon: 'none',
+          duration: 2500
+        })
+      }
+    }
+  
+    async handleQueryActList (shareKey) {
+      const _this = this
+      wx.showLoading({
+        title: '请稍后...',
+        mask: true
+      })
+      let reqObj = {
+        url: `https://payhome.jd.com/my/api/etc/kanjia/helperList?token=${_this.shareKey}`,
+        header: {
+          Cookie: 'pt_key=' + _this.ptKey
+        }
+      }
+      let res = await wepy.request(reqObj)
+      let RES = res.data
+      if (RES.code === 'INVITE_000000') {
+        let RESDATA = RES.data
+        if (RESDATA.id === '0') { // 发起者
+          _this.visitorStatus = 1
+        } else if (RESDATA.id === '1') { // 助力者
+          _this.visitorStatus = 2
+        } else { // 游客
+          _this.visitorStatus = 0
+        }
+        _this.linePercent = RESDATA.totalMoney / _this.maxCutPrice * 100 + '%'
+        _this.finalPrice = _this.originPrice - RESDATA.totalMoney
+        _this.friendsList = RESDATA.list
+        _this.showFriendsList = RESDATA.list.slice(0, 5)
+  
+        _this.$apply()
+      } else {
+        wx.showToast({
+          title: `${RES.msg}`,
+          icon: 'none',
+          duration: 2500
+        })
+      }
+    }
+  
+    handleStartActAuth (res) {
+      const _this = this
+      let DETAIL = res.detail
+      if (DETAIL.errMsg === 'getUserInfo:ok') {
+        _this.visitorWXName = DETAIL.userInfo.nickName
+        _this.visitorWXAvatar = DETAIL.userInfo.avatarUrl
+        _this.$apply()
+      }
+  
+      _this.handleStartAct()
+    }
+  
+    async handleStartAct () {
+      const _this = this
+  
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_start',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+  
+      let reqObj = {
+        url: 'https://payhome.jd.com/my/api/etc/kanjia/attendActivity',
+        data: {
+          type: 'bargain',
+          wechatName: _this.visitorWXName,
+          wechatImgUrl: _this.visitorWXAvatar,
+          platForm: 'WX' // 发起平台JDAPP、WX
+        },
+        header: {
+          Cookie: 'pt_key=' + _this.ptKey
+        }
+      }
+      let res = await wepy.request(reqObj)
+      let RES = res.data
+      if (RES.code === 'INVITE_000000') { // 存shareKey 去分享
+        _this.shareKey = RES.data
+        _this.$apply()
+        wx.navigateTo({
+          url: `/pages/activity/kanjiaimg/kanjiaimg?sharePath=${encodeURIComponent('pages/activity/kanjia/kanjia?shareKey=' + _this.shareKey + '&poster=' + _this.poster)}&poster=${_this.poster}`
+        })
+      } else {
+        wx.showToast({
+          title: `${RES.msg}`,
+          icon: 'none',
+          duration: 2500
+        })
+      }
+    }
+  
+    async handleCurrentPriceDeal () {
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_currentDeal',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+  
+      const _this = this
+      let reqObj = {
+        url: `https://subwayauth.jd.com/etc/queryOpenQualify`,
+        data: {
+          merchantNo: '110515396002',
+          applySource: '1'
+        },
+        header: {
+          Cookie: 'pt_key=' + _this.data.ptKey
+        }
+      }
+      let res = wepy.request(reqObj)
+      let RES = res.data
+      if (RES.code === '000000' && RES.data.applyOrderNo) {
+        loginUtils.default.navigateToH5({
+          page: encodeURIComponent(`https://etc.jd.com/#/confirmInfo?theMerchantNo=110515396002&theApplyOrderNo=${RES.data.applyOrderNo}`)
+        })
+      } else if (RES.code === 'AUTH100142' && RES.data.applyOrderNo) { // 非实名
+        let rturl = `https://etc.jd.com/#/confirmInfo?theMerchantNo=110515396002&theApplyOrderNo=${RES.data.applyOrderNo}`
+        loginUtils.default.navigateToH5({
+          page: encodeURIComponent(`https://msca.jd.com/auth/loginpage/wcoo/toAuthPage?source=15&businessType=643&directReturnUrl=${encodeURIComponent(rturl)}`)
+        })
+      } else if (RES.code === 'AUTH100143') { // 非身份证实名用户
+        wx.showModal({
+          title: '提示',
+          content: '您好，ETC开通服务目前仅支持身份证实名认证用户，其它认证开通敬请期待',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      } else if (RES.code === 'AUTH100144') { // 小白分不合格
+        wx.showModal({
+          title: '提示',
+          content: '您还未获得ETC办理名额，敬请期待',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      } else if (RES.code === 'AUTH100106') { // 存在正在申请中的记录
+        wx.showModal({
+          title: '提示',
+          content: '您有正在办理的ETC设备，请办理成功后再来哦',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      } else {
+        wx.showModal({
+          title: '提示',
+          content: '很抱歉，您暂时不具备办理资格',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      }
+    }
+  
+    handleOriginShare () {
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_shareOrigin',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+      const _this = this
+      wx.navigateTo({
+        url: `/pages/activity/kanjiaimg/kanjiaimg?sharePath=${encodeURIComponent('pages/activity/kanjia/kanjia')}&poster=${_this.poster}`
+      })
+    }
+  
+    handleHelpShare () {
+      const _this = this
+  
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_shareHelp',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+  
+      wx.navigateTo({
+        url: `/pages/activity/kanjiaimg/kanjiaimg?sharePath=${encodeURIComponent('pages/activity/kanjia/kanjia?shareKey=' + _this.shareKey + '&poster=' + _this.poster)}&poster=${_this.poster}`
+      })
+    }
+  
+    handleSelfIn () {
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_selfIn',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+      const _this = this
+      wx.navigateTo({
+        url: `/pages/activity/kanjia/kanjia?poster=${_this.poster}`
+      })
+    }
+  
+    handleDoBargainAuth (res) {
+      const _this = this
+      console.log(res)
+      let DETAIL = res.detail
+      if (DETAIL.errMsg === 'getUserInfo:ok') {
+        _this.visitorWXName = DETAIL.userInfo.nickName
+        _this.visitorWXAvatar = DETAIL.userInfo.avatarUrl
+        _this.$apply()
+      }
+  
+      _this.handleDoBargain()
+    }
+  
+    async handleDoBargain () {
+      const _this = this
+  
+      utils.sendPoint({
+        biz: 'ETC-ACT-KANJIA',
+        key_view: 'act_kanjia',
+        key_event: 'click',
+        key_area: 'btn_bargain',
+        key_reserve1: getCurrentPages()[getCurrentPages().length - 1].options.poster, // eslint-disable-line
+        key_reserve2: 'mini'
+      })
+  
+      let reqObj = {
+        url: 'https://payhome.jd.com/my/api/etc/kanjia/help',
+        data: {
+          token: _this.shareKey,
+          wechatName: _this.visitorWXName,
+          wechatImgUrl: _this.visitorWXAvatar
+        },
+        header: {
+          Cookie: 'pt_key=' + _this.ptKey
+        }
+      }
+      let res = await wepy.request(reqObj)
+      let RES = res.data
+      if (RES.code === 'INVITE_000000') {
+        _this.successPopPrice = RES.data.price
+        _this.showSuccessPop = true
+        _this.$apply()
+  
+        _this.handleQueryActInfo()
+      } else {
+        wx.showToast({
+          title: `${RES.msg}`,
+          icon: 'none',
+          duration: 2500
+        })
+      }
+    }
+  
+    handleCalculateCountDown (actStartTime) {
+      let actEndTime = actStartTime + 24 * 3600 * 1000
+      let curTime = Date.parse(new Date())
+      let cd = actEndTime - curTime
+      if (cd <= 0) { // 活动过期
+        cd = 0
+        if (this.actStatus === 100) {
+          if (this.friendsList.length > 0) {
+            this.actStatus = 300
+          } else {
+            this.actStatus = 200
+          }
+        }
+        clearInterval(this.data.kanjiaTimer)
+      } else {
+        cd = cd / 1000
+      }
+      let timearr = [
+        (parseInt(cd / 60 / 60) + '').replace(/\b(\d)\b/g, '0$1'),
+        (parseInt(cd / 60 % 60) + '').replace(/\b(\d)\b/g, '0$1'),
+        (parseInt(cd % 60) + '').replace(/\b(\d)\b/g, '0$1')
+      ]
+      this.cdh = timearr[0]
+      this.cdm = timearr[1]
+      this.cds = timearr[2]
+    }
+  
+    handleCloseBargainSuccessPop () {
+      this.showSuccessPop = false
+    }
+  
+    handleShowAllList () {
+      this.showFriendsList = this.friendsList
+    }
+}
+</script>
+
+<style lang="scss" scoped>
+  .red {
+    color: #e25750;
+  }
+  
+  .kanjia_container {
+    width: 100%;
+    min-height: 100%;
+    position: relative;
+    background-color: #c21524;
+    padding: 0 0 120rpx 0;
+  }
+  
+  .logo_box {
+    width: 100%;
+    height: 805rpx;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: 0 0;
+    background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/activity_kanjia_logo.png);
+    position: relative;
+  }
+  .logo_box .sponsor_box {
+    position: absolute;
+    left: 0;
+    top: 80rpx;
+    width: 160rpx;
+    height: 60rpx;
+    padding: 0 4rpx 0 0;
+    border-radius: 0 30rpx 30rpx 0;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo_box .sponsor_box .sponsor_name {
+    flex: 1 0 0%;
+    text-align: center;
+    color: #db2621;
+    font-style: italic;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 20rpx;
+  }
+  .logo_box .sponsor_box .sponsor_img {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+  }
+  
+  .operation_box {
+    width: 688rpx;
+    /*height: 3.12rem;*/
+    border-radius: 20rpx;
+    background-color: #fff;
+    margin: -220rpx auto 0;
+    padding: 18rpx 0 43rpx 0;
+    position: relative;
+  }
+  .operation_header {
+    width: 650rpx;
+    height: 218rpx;
+    background-color: #f1f1f1;
+    border-radius: 8rpx;
+    margin: 0 auto;
+    padding: 0 0 0 12rpx;
+    display: flex;
+    align-items: center;
+  }
+  .operation_header .operation_header_left {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 190rpx;
+    height: 190rpx;
+    margin: 0 40rpx 0 0;
+  }
+  .operation_header_right {
+    box-sizing: border-box;
+    height: 100%;
+    padding: 20rpx 0 0 0;
+  }
+  .operation_header_right .operation_header_p {
+    font-size: 28rpx;
+    color: #4d4d4d;
+    padding: 0 20rpx 0 0;
+  }
+  .operation_header_right .operation_header_span {
+    margin: 40rpx auto 0;
+    font-size: 24rpx;
+  }
+  .operation_header_right .operation_header_span .operation_header_span1 {
+    text-decoration: line-through;
+    margin: 0 40rpx 0 0;
+  }
+  .operation_header_right .operation_header_span .operation_header_spantext {
+    font-weight: 400;
+    font-size: 42rpx;
+    position: relative;
+    top: 3rpx;
+  }
+  
+  .progress_box {
+    width: 100%;
+    padding: 52rpx 0 0 0;
+  }
+  .progress_total {
+    text-align: center;
+    font-size: 24rpx;
+    color: #6d6d6d;
+    position: relative;
+  }
+  .kanjia_success_icon {
+    position: absolute;
+    top: -70rpx;
+    right: -20rpx;
+    width: 138rpx;
+    height: 138rpx;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: 0 0;
+    background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/kanjia_success_icon.png);
+  }
+  .kanjia_complete_icon {
+    position: absolute;
+    top: -70rpx;
+    right: -20rpx;
+    width: 138rpx;
+    height: 138rpx;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: 0 0;
+    background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/kanjia_complete_icon.png);
+  }
+  .kanjia_fail_icon {
+    position: absolute;
+    top: -80rpx;
+    right: -20rpx;
+    width: 185rpx;
+    height: 144rpx;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: 0 0;
+    background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/kanjia_fail_icon.png);
+  }
+  
+  .progress_line {
+    margin: 25rpx auto 0;
+    width: 632rpx;
+    height: 25rpx;
+    border-radius: 12.5rpx;
+    background-color: #fee4e4;
+  }
+  .progress_line .line_sub {
+    height: 100%;
+    border-radius: 12.5rpx;
+    background-color: #f54949;
+    transition: width 1s ease;
+  }
+  
+  .progress_origin {
+    margin: 15rpx auto 0;
+    width: 632rpx;
+    font-size: 24rpx;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .progress_time {
+    margin: 8rpx auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24rpx;
+    color: #6d6d6d;
+  }
+  .progress_time .progress_time_num {
+    box-sizing: border-box;
+    /*padding: 3rpx 5rpx;*/
+    border-radius: 3rpx;
+    background-color: #f54949;
+    color: #fff;
+    font-size: 20rpx;
+    width: 40rpx;
+    height: 40rpx;
+    line-height: 40rpx;
+    text-align: center;
+  }
+  .progress_time .progress_time_dot {
+    color: #f54949;
+    font-size: 28rpx;
+    font-weight: 600;
+    margin: 0 4rpx;
+  }
+  
+  .progress_explain {
+    margin: 40rpx auto 0;
+    text-align: center;
+    font-size: 24rpx;
+    color: #6d6d6d;
+  }
+  
+  .btn_box {
+    margin: 52rpx auto 0;
+    width: 636rpx;
+    display: flex;
+    justify-content: space-between;
+  }
+  .btn_box .big_btn {
+    width: 100%;
+    height: 97rpx;
+    border-radius: 48.5rpx;
+    background-image: linear-gradient(180deg, rgba(255, 76, 76, 0.84), #f54949);
+    line-height: 97rpx;
+    text-align: center;
+    color: #fff;
+    font-size: 30rpx;
+    font-weight: 600;
+  }
+  .btn_box .sm_btn {
+    width: 300rpx;
+    height: 97rpx;
+    border-radius: 48.5rpx;
+    line-height: 97rpx;
+    text-align: center;
+    font-size: 30rpx;
+    font-weight: 600;
+  }
+  .sm_btn1 {
+    color: #b22c24;
+    background-image: linear-gradient(180deg, rgba(255, 203, 95, 0.85), #f4c05b);
+  }
+  .sm_btn2 {
+    color: #fff;
+    background-image: linear-gradient(180deg, rgba(255, 76, 76, 0.84), #f54949);
+  }
+  
+  
+  .sub_title {
+    margin: 0 auto;
+    font-size: 38rpx;
+    color: #fff;
+    text-align: center;
+  }
+  
+  .what_box {
+    box-sizing: border-box;
+    padding: 36rpx 0 58rpx 0;
+    margin: 30rpx auto 0;
+    width: 688rpx;
+    background-color: #d1363b;
+    border-radius: 20rpx;
+  }
+  .what_box .what_item {
+    box-sizing: border-box;
+    margin: 53rpx auto 0;
+    padding: 0 0 0 82rpx;
+    display: flex;
+    align-items: center;
+  }
+  .what_item_left {
+    width: 93rpx;
+    height: 93rpx;
+    margin: 0 22rpx 0 0;
+  }
+  .what_item_right .what_item_right1 {
+    font-size: 28rpx;
+    color: #fff;
+  }
+  .what_item_right .what_item_right2 {
+    font-size: 16rpx;
+    color: #fff;
+  }
+  
+  .friend_box {
+    box-sizing: border-box;
+    padding: 36rpx 0 58rpx 0;
+    margin: 30rpx auto 0;
+    width: 688rpx;
+    background-color: #d1363b;
+    border-radius: 20rpx;
+  }
+  .list_box {
+    margin: 0 auto 76rpx;
+    width: 532rpx;
+  }
+  .list_more {
+    margin: 30rpx auto 0;
+    font-size: 28rpx;
+    font-style: italic;
+    text-align: center;
+    text-decoration: underline;
+    color: #ffd042;
+  }
+  .friend_item {
+    width: 100%;
+    padding: 18rpx 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .5);
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .friend_item .friend_left {
+    display: flex;
+    align-items: center;
+  }
+  .friend_item .friend_left .friend_left_avatar {
+    width: 56rpx;
+    height: 56rpx;
+    margin: 0 18rpx 0 0;
+  }
+  .friend_item .friend_left .friend_left_text {
+    color: #fff;
+  }
+  .friend_item .friend_left .friend_left_text1 {
+    font-size: 24rpx;
+  }
+  .friend_item .friend_left .friend_left_text2 {
+    font-size: 20rpx;
+  }
+  .friend_item .friend_right {
+    color: #fff;
+    font-size: 30rpx;
+  }
+  .friend_item .friend_right .friend_right_text {
+    color: #ffc148;
+    font-weight: 600;
+  }
+  
+  .rule_box {
+    margin: 36rpx auto 0;
+    padding: 0 50rpx 0 60rpx;
+    
+    .rulep::before {
+      position: absolute;
+      left: -30rpx;
+      top: 5.5rpx;
+      width: 22rpx;
+      height: 22rpx;
+      background-color: #c21524;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 22rpx;
+      font-size: 16rpx;
+    }
+    .rulep {
+      font-size: 18rpx;
+      color: #fff;
+      position: relative;
+    }
+    .rulep1::before {
+      content: '1';
+    }
+    .rulep2::before {
+      content: '2';
+    }
+    .rulep3::before {
+      content: '3';
+    }
+    .rulep4::before {
+      content: '4';
+    }
+    .rulep5::before {
+      content: '5';
+    }
+    .rulep6::before {
+      content: '6';
+    }
+  }
+  
+  .mini_success_pop {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    
+    .layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 11;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,.7);
+    }
+    .content {
+      box-sizing: border-box;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 12;
+      margin: auto;
+      padding: 67rpx 0 0 0;
+      width: 500rpx;
+      height: 650rpx;
+      background-color: #fff;
+      border-radius: 15rpx;
+      
+      .content_close {
+        position: absolute;
+        top: -34rpx;
+        right: -34rpx;
+        width: 68rpx;
+        height: 68rpx;
+        text-align: center;
+        line-height: 68rpx;
+        color: #e9b65b;
+        border-radius: 50%;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-image: url(https://storage.jd.com/fe-zx/etcmini/activity/kanjia/close_icon.png);
+      }
+      .content_img {
+        display: block;
+        width: 355rpx;
+        height: 366rpx;
+        margin: 0 auto;
+      }
+      .content_p {
+        margin: 13rpx auto 0;
+        font-size: 30rpx;
+        color: #484848;
+        text-align: center;
+      }
+      .content_btn {
+        margin: 30rpx auto 0;
+        width: 355rpx;
+        height: 87rpx;
+        background-image: linear-gradient(180deg, #ff4243, #f43e3f);
+        text-align: center;
+        line-height: 87rpx;
+        color: #fff;
+        font-weight: 600;
+        border-radius: 43.5rpx;
+      }
+    }
+  }
+</style>

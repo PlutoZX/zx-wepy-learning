@@ -5,11 +5,13 @@
 		"es6": false,
 		"postcss": false,
 		"minified": false,
-		"newFeature": true
+		"newFeature": true,
+		"nodeModules": true,
+		"autoAudits": false
 	},
 	"compileType": "miniprogram",
 	"appid": "wx9b0f1cbfe6a9e7bf",
-	"projectname": "learnetc",
+	"projectname": "learnwepy",
 	"miniprogramRoot": "dist/",
 	"condition": {
 		"search": {
@@ -28,7 +30,7 @@
 			"list": []
 		},
 		"miniprogram": {
-			"current": 2,
+			"current": 3,
 			"list": [
 				{
 					"id": -1,
@@ -47,6 +49,11 @@
 					"name": "直接进图片生成页不带参数",
 					"pathName": "pages/activity/kanjiaimg/kanjiaimg",
 					"query": ""
+				},
+				{
+					"id": -1,
+					"name": "进活动页不带参数",
+					"pathName": "pages/activity/kanjia/kanjia"
 				}
 			]
 		}
