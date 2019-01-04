@@ -1,0 +1,218 @@
+<template>
+  <view class="wxpay-container">
+    <image class="loading" mode="widthFix" src="{{loadingSrc}}"></image>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import loginUtils from '../../login/util'
+  
+  export default class Wxpay extends wepy.page {
+    config = {
+      'navigationBarTitleText': 'ETC京东支付'
+    }
+  
+    data = {
+      loadingSrc: 'https://storage.jd.com/fe-zx/etcmini/imgs/ETC.gif',
+      apiUrl: { // 服务端接口地址 key要和query里的thePayType一致方便取用
+        pass: 'https://subwayauth.jd.com/etc/doEtcPay', // 缴通行费接口
+        eqpt: 'https://subwayauth.jd.com/etc/createDevicePayOrder' // 缴设备费接口
+      },
+      thePayType: '', // pass通行费 eqpt设备费
+      theOrderId: '', // 订单id
+      theMerchantNo: '', // 商户号
+      theApplyOrderNo: '', // 申请单号
+      wxPaySuccessUrl: '', // 支付成功跳转url
+      wxPayFailUrl: '' // 支付失败跳转url
+    }
+  
+    async onLoad (urlQuery) {
+      let _this = this
+  
+      _this.thePayType = urlQuery.payType || ''
+      _this.theOrderId = urlQuery.orderId || ''
+      _this.theMerchantNo = urlQuery.theMerchantNo || ''
+      _this.theApplyOrderNo = urlQuery.theApplyOrderNo || ''
+      _this.wxPaySuccessUrl = urlQuery.wxPaySuccessUrl || ''
+      _this.wxPayFailUrl = urlQuery.wxPayFailUrl || ''
+  
+      if (!urlQuery.payType) { // 无支付类型报错
+        wx.showToast({
+          title: '缺少参数',
+          icon: 'loading'
+        })
+        return false
+      }
+  
+      let resLogin = await wepy.login()
+      if (resLogin.errMsg === 'login:ok' && resLogin.code) {
+        let url = _this.apiUrl[_this.thePayType] // 服务端接口地址
+        let ptKey = requirePlugin("loginPlugin").getStorageSync("jdlogin_pt_key") || '' // eslint-disable-line
+        let reqObj = _this.structureReq(_this.thePayType, resLogin.code) // 组装请求服务端的参数
+        let {data: resParam} = await _this.queryWXParam(url, ptKey, reqObj)
+        if (resParam.code === '000000') {
+          let wxpay = JSON.parse(resParam.data.wxHttpUrl)
+          let actPayReqObj = {
+            timeStamp: wxpay.timeStamp,
+            nonceStr: wxpay.nonceStr,
+            package: wxpay.package,
+            paySign: wxpay.paySign
+          }
+  
+          try {
+            let resActPay = await _this.actWXPay(actPayReqObj)
+            if (resActPay.errMsg === 'requestPayment:ok') {
+              _this.handleReturnH5('success')
+            } else if (resActPay.errMsg.indexOf('cancel') > -1) {
+              _this.handleReturnH5('cancel')
+            } else {
+              _this.handleReturnH5('fail')
+            }
+          } catch (resActPay) {
+            console.log(resActPay)
+            if (resActPay.errMsg === 'requestPayment:ok') {
+              _this.handleReturnH5('success')
+            } else if (resActPay.errMsg.indexOf('cancel') > -1) {
+              _this.handleReturnH5('cancel')
+            } else {
+              _this.handleReturnH5('fail')
+            }
+          }
+        } else if (resParam.code === 'AUTH000002') {
+          wx.redirectTo({
+            url: `/pages/login/index/index?returnPage=` +
+              `${encodeURIComponent(
+                '/pages/home/wxpay/wxpay?payType=' + _this.thePayType +
+                '&theMerchantNo=' + _this.theMerchantNo +
+                '&theApplyOrderNo=' + _this.theApplyOrderNo +
+                '&wxPaySuccessUrl=' + _this.wxPaySuccessUrl +
+                '&wxPayFailUrl=' + _this.wxPayFailUrl +
+                '&orderId=' + _this.orderId
+              )}`
+          })
+        } else {
+          wx.showToast({
+            title: '获取参数失败',
+            icon: 'loading'
+          })
+        }
+      } else {
+        wx.showToast({
+          title: '获取code失败',
+          icon: 'loading'
+        })
+      }
+    }
+  
+    method = {}
+  
+    structureReq (payType, code) {
+      let _this = this
+      if (payType === 'eqpt') { // 设备费
+        return {
+          merchantNo: _this.theMerchantNo,
+          applyOrderNo: _this.theApplyOrderNo,
+          jsCode: code,
+          applySource: '1'
+          // openId: 'opfkM5EVoioLcUIehE5CAP2SyyHk' // 临时测试
+        }
+      } else if (payType === 'pass') { // 通行费
+        return {
+          orderId: _this.theOrderId,
+          jsCode: code
+        }
+      } else { // 错误
+        return {
+          errMsg: '错误，无缴费类型'
+        }
+      }
+    }
+  
+    queryWXParam (url, ptKey, reqObj) {
+      return wepy.request({
+        url: url,
+        data: reqObj,
+        header: {
+          Cookie: 'pt_key=' + ptKey
+        },
+        method: 'POST',
+        dataType: 'json',
+        responseType: 'text'
+      })
+    }
+  
+    actWXPay (reqObj) {
+      return wepy.requestPayment({
+        timeStamp: reqObj.timeStamp,
+        nonceStr: reqObj.nonceStr,
+        package: reqObj.package,
+        paySign: reqObj.paySign,
+        signType: 'MD5'
+      })
+    }
+  
+    handleReturnH5 (payRes) { // 根据缴费类型 缴费结果 决定回跳 字段约定和ETCvue项目一致
+      let _this = this
+      if (_this.thePayType === 'eqpt') { // 设备费缴费结果
+        if (payRes === 'success') { // 成功
+          wx.showToast({
+            title: '支付成功'
+          })
+          loginUtils.redirectToH5({
+            page: _this.wxPaySuccessUrl
+          })
+        } else if (payRes === 'cancel') { // 取消
+          wx.showToast({
+            title: '支付取消',
+            icon: 'none'
+          })
+          loginUtils.redirectToH5({
+            page: _this.wxPayFailUrl
+          })
+        } else { // 失败
+          wx.showToast({
+            title: '支付失败',
+            icon: 'none'
+          })
+          loginUtils.redirectToH5({
+            page: _this.wxPayFailUrl
+          })
+        }
+      } else if (_this.thePayType === 'pass') { // 通行费缴费结果
+        if (payRes === 'success') { // 成功
+          wx.showToast({
+            title: '支付成功'
+          })
+        } else if (payRes === 'cancel') { // 取消
+          wx.showToast({
+            title: '支付取消',
+            icon: 'none'
+          })
+        } else { // 失败
+          wx.showToast({
+            title: '支付失败',
+            icon: 'none'
+          })
+        }
+      }
+    }
+  }
+</script>
+
+<style lang="scss" scoped>
+  .wxpay-container {
+    min-width: 100%;
+    min-height: 100%;
+  }
+  .loading {
+    width: 210rpx;
+    height: 210rpx;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+</style>
